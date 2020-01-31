@@ -9,6 +9,7 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
@@ -44,7 +45,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = 6.0;
-  static private double ENCODER_EDGES_PER_REV = 4096 / 4.;
+  static private double ENCODER_EDGES_PER_REV = 2048 / 4.; // falcon 500 has 2048 CPR, SRX mags have 4096 ticks per rev
 
   Joystick stick;
   DifferentialDrive drive;
@@ -69,16 +70,22 @@ public class Robot extends TimedRobot {
     stick = new Joystick(0);
 
     WPI_TalonFX leftMotor1 = new WPI_TalonFX(4);
+    WPI_TalonFX leftMotor2 = new WPI_TalonFX(5);
+    leftMotor1.configFactoryDefault();
+    leftMotor2.configFactoryDefault();
 
     WPI_TalonFX rightMotor1 = new WPI_TalonFX(2);
+    WPI_TalonFX rightMotor2 = new WPI_TalonFX(3);
+    rightMotor1.configFactoryDefault();
+    rightMotor2.configFactoryDefault();
     rightMotor1.setInverted(true);
+    rightMotor2.setInverted(true);
 
     SpeedController[] leftMotors = new SpeedController[1];
-    leftMotors[0] = new WPI_TalonFX(5);
+    leftMotors[0] = leftMotor2;
 
     SpeedController[] rightMotors = new SpeedController[1];
-    rightMotors[0] = new WPI_TalonFX(3);
-    rightMotors[0].setInverted(true);
+    rightMotors[0] = rightMotor2;
 
     //
     // Configure gyro
@@ -97,6 +104,7 @@ public class Robot extends TimedRobot {
     SpeedControllerGroup rightGroup = new SpeedControllerGroup(rightMotor1, rightMotors);
 
     drive = new DifferentialDrive(leftGroup, rightGroup);
+    drive.setRightSideInverted(false); // Drivetrain inversion is already handled in motor configs
     drive.setDeadband(0);
 
 
@@ -107,17 +115,17 @@ public class Robot extends TimedRobot {
 
     double encoderConstant = (1 / ENCODER_EDGES_PER_REV) * WHEEL_DIAMETER * Math.PI;
 
-    Encoder leftEncoder = new Encoder(0, 1);
-    leftEncoder.setReverseDirection(true);
-    leftEncoder.setDistancePerPulse(encoderConstant);
-    leftEncoderPosition = leftEncoder::getDistance;
-    leftEncoderRate = leftEncoder::getRate;
 
-    Encoder rightEncoder = new Encoder(2, 3);
-    rightEncoder.setReverseDirection(true);
-    rightEncoder.setDistancePerPulse(encoderConstant);
-    rightEncoderPosition = rightEncoder::getDistance;
-    rightEncoderRate = rightEncoder::getRate;
+    leftMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0 ,0); //TODO: check
+    leftMotor1.setSensorPhase(true);
+    leftEncoderPosition = () -> leftMotor1.getSelectedSensorPosition() * encoderConstant;
+    leftEncoderRate = () -> leftMotor1.getSelectedSensorVelocity() * 10.0 * encoderConstant;
+
+
+    rightMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0 ,0);
+    rightMotor1.setSensorPhase(true);
+    rightEncoderPosition = () -> rightMotor1.getSelectedSensorPosition() * encoderConstant;
+    rightEncoderRate = () -> rightMotor1.getSelectedSensorVelocity() * 10.0 * encoderConstant;
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
