@@ -129,7 +129,7 @@ public class Robot extends TimedRobot {
     rightMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0 ,0);
     rightMotor1.setSensorPhase(false);
     rightEncoderPosition = () -> rightMotor1.getSelectedSensorPosition(0) * encoderConstant * 2.0; //For some reason this was half of what it was supposed to be
-    rightEncoderRate = () -> rightMotor1.getSelectedSensorVelocity(0) * 10.0 * encoderConstant;
+    rightEncoderRate = () -> rightMotor1.getSelectedSensorVelocity(0) * 10.0 * encoderConstant * 2.0;
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
