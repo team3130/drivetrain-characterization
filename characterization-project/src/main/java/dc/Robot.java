@@ -45,7 +45,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = 6.0;
-  static private double ENCODER_EDGES_PER_REV = 2048 / 4.; // falcon 500 has 2048 CPR, SRX mags have 4096 ticks per rev
+  static private double ENCODER_EDGES_PER_REV = 2048.0; // falcon 500 has 2048 CPR, SRX mags have 4096 ticks per rev
 
   Joystick stick;
   DifferentialDrive drive;
@@ -149,6 +149,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
     SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
     SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    SmartDashboard.putNumber("gyro_angle", gyroAngleRadians.get() * 360.0 / (2 * Math.PI));
   }
 
   @Override
