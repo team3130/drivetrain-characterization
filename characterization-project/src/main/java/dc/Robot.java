@@ -9,12 +9,13 @@ package dc;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.Util;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 // WPI_Talon* imports are needed in case a user has a Pigeon on a Talon
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.PigeonIMU;
 import com.kauailabs.navx.frc.AHRS;
@@ -41,11 +42,12 @@ import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpiutil.math.MathUtil;
 
 public class Robot extends TimedRobot {
 
   static private double WHEEL_DIAMETER = 6.0;
-  static private double ENCODER_EDGES_PER_REV = 2048 / 4.; // falcon 500 has 2048 CPR, SRX mags have 4096 ticks per rev
+  static private double ENCODER_EDGES_PER_REV = 4096.0; // falcon 500 has 2048 CPR, SRX mags have 4096 ticks per rev
 
   Joystick stick;
   DifferentialDrive drive;
@@ -69,17 +71,19 @@ public class Robot extends TimedRobot {
 
     stick = new Joystick(0);
 
-    WPI_TalonFX leftMotor1 = new WPI_TalonFX(4);
-    WPI_TalonFX leftMotor2 = new WPI_TalonFX(5);
+    WPI_TalonSRX leftMotor1 = new WPI_TalonSRX(5);
+    WPI_TalonSRX leftMotor2 = new WPI_TalonSRX(4);
     leftMotor1.configFactoryDefault();
     leftMotor2.configFactoryDefault();
+    leftMotor1.setInverted(true);
+    leftMotor2.setInverted(true);
 
-    WPI_TalonFX rightMotor1 = new WPI_TalonFX(2);
-    WPI_TalonFX rightMotor2 = new WPI_TalonFX(3);
+    WPI_TalonSRX rightMotor1 = new WPI_TalonSRX(3);
+    WPI_TalonSRX rightMotor2 = new WPI_TalonSRX(2);
     rightMotor1.configFactoryDefault();
     rightMotor2.configFactoryDefault();
-    rightMotor1.setInverted(true);
-    rightMotor2.setInverted(true);
+    rightMotor1.setInverted(false);
+    rightMotor2.setInverted(false);
 
     SpeedController[] leftMotors = new SpeedController[1];
     leftMotors[0] = leftMotor2;
@@ -117,15 +121,15 @@ public class Robot extends TimedRobot {
 
 
     leftMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0 ,0); //TODO: check
-    leftMotor1.setSensorPhase(true);
-    leftEncoderPosition = () -> leftMotor1.getSelectedSensorPosition() * encoderConstant;
-    leftEncoderRate = () -> leftMotor1.getSelectedSensorVelocity() * 10.0 * encoderConstant;
+    leftMotor1.setSensorPhase(false);
+    leftEncoderPosition = () -> leftMotor1.getSelectedSensorPosition(0) * encoderConstant;
+    leftEncoderRate = () -> leftMotor1.getSelectedSensorVelocity(0) * 10.0 * encoderConstant;
 
 
     rightMotor1.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0 ,0);
-    rightMotor1.setSensorPhase(true);
-    rightEncoderPosition = () -> rightMotor1.getSelectedSensorPosition() * encoderConstant;
-    rightEncoderRate = () -> rightMotor1.getSelectedSensorVelocity() * 10.0 * encoderConstant;
+    rightMotor1.setSensorPhase(false);
+    rightEncoderPosition = () -> rightMotor1.getSelectedSensorPosition(0) * encoderConstant * 2.0; //For some reason this was half of what it was supposed to be
+    rightEncoderRate = () -> rightMotor1.getSelectedSensorVelocity(0) * 10.0 * encoderConstant;
 
     // Set the update rate instead of using flush because of a ntcore bug
     // -> probably don't want to do this on a robot in competition
@@ -149,6 +153,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("l_encoder_rate", leftEncoderRate.get());
     SmartDashboard.putNumber("r_encoder_pos", rightEncoderPosition.get());
     SmartDashboard.putNumber("r_encoder_rate", rightEncoderRate.get());
+    SmartDashboard.putNumber("gyro_angle", gyroAngleRadians.get() * 360.0/ (2 * Math.PI));
   }
 
   @Override
